@@ -1,0 +1,64 @@
+  - name: "docker installation"
+    package:
+            name: "docker"
+            state: present
+
+  - name: "create kubernetes repository"
+    copy:
+            src: "kubernetes.repo"
+            dest: "/etc/yum.repos.d/kubernetes.repo"
+
+  - name: "kubernetes installation"
+    package:
+            name: "kubeadm"
+            state: present
+
+  - name: "change docker  driver"
+    copy:
+            src: "daemon.json"
+            dest: "/etc/docker/daemon.json"
+
+  - name: "iproute-tc installation"
+    package:
+            name: "iproute-tc"
+            state: present
+
+  - name: "configure kubernetes file"
+    copy:
+            src: "tables.txt"
+            dest: "/etc/sysctl.d/k8s.conf"
+
+  - name: "start system service"
+    shell: "sysctl --system"
+
+  - name: "enable docker service"
+    service:
+            name: "docker"
+            state: "started"
+            enabled: yes
+
+  - name: "enable kubelet service"
+    service:
+            name: "kubelet"
+            state: "started"
+            enabled: yes
+
+  - name: "pulling images"
+    command: "kubeadm config images pull"
+
+  - name: "initialise kubernetes"
+    command: "kubeadm init  --ignore-preflight-errors=NumCPU --ignore-preflight-errors=Mem"
+    ignore_errors: yes
+
+  - name: "reset kubernetes"
+    shell: "echo y | kubeadm reset"
+
+  - name: "copy token to workernode"
+    copy:
+            src: "token.txt"
+            dest: "/token.txt"
+
+  - name: "join masternode"
+    command: "bash /token.txt"
+
+    

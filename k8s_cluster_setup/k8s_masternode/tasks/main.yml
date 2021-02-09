@@ -1,0 +1,80 @@
+  - name: "docker installation"
+    package:
+            name: "docker"
+            state: present
+
+  - name: "creating kubernetes repository"
+    copy:
+            src: "kubernetes.repo"
+            dest: "/etc/yum.repos.d/kubernetes.repo"
+
+  - name: "kubernetes installation"
+    package:
+            name: "kubeadm"
+            state: present
+
+  - name: "change docker driver"
+    copy:
+            src: "daemon.json"
+            dest: "/etc/docker/daemon.json"
+
+  - name: "iproute-tc installation"
+    package:
+            name: "iproute-tc"
+            state: present
+
+  - name: "kubernetes configuration"
+    copy:
+            src: "tables.txt"
+            dest: "/etc/sysctl.d/k8s.conf"
+
+  - name: "start system service"
+    shell: "sysctl --system"
+
+  - name: "enable docker service"
+    service:
+            name: "docker"
+            state: "started"
+            enabled: yes
+
+  - name: "enable kubelet service"
+    service:
+            name: "kubelet"
+            state: "started"
+            enabled: yes
+
+  - name: "pulling images"
+    command: "kubeadm config images pull"
+
+  - name: "initialise kubernetes"
+    command: "kubeadm init --pod-network-cidr=10.244.0.0/16 --ignore-preflight-errors=NumCPU --ignore-preflight-errors=Mem"
+    ignore_errors: yes
+
+  - name: "creating kubernetes internal folder"
+    shell: "mkdir -p $HOME/.kube"
+  
+  - name: "remove kubernetes internal folder"
+    file:
+          path: "$HOME/.kube/config"
+          state: absent
+    ignore_errors: yes
+
+  - name: "coping files to internal folder"
+    shell: "cp -i /etc/kubernetes/admin.conf $HOME/.kube/config"
+    
+  - name: "chown folder" 
+    shell: "chown $(id -u):$(id -g) $HOME/.kube/config"
+
+  - name: "flannel container start"
+    shell: "kubectl apply  -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml"
+
+  - name: "creating token"
+    shell: "kubeadm token create --print-join-command"
+    register: token
+
+  - name: "saving token"
+    local_action:
+          copy
+             content="{{ token.stdout }}"
+             dest="./token.txt"
+

@@ -1,0 +1,5 @@
+- hosts: tag_Name_master
+  roles:
+  - role: "k8s_masternode"
+
+
