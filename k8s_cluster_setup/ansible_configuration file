@@ -1,0 +1,10 @@
+[defaults]
+inventory='<your inventory path>'
+remote_user=ec2-user
+private_key_file='<your private key file>'
+host_key_checking=false
+
+[privilege_escalation]
+become=true
+become_method=sudo
+become_user=root
