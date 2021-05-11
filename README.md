@@ -12,3 +12,5 @@
    - export AWS_REGION='region name'
 7. Make sure your master instances name is "master"
 8. Make sure your worker instances name is "worker"
+9. For Setup Masternode in Cluster Run Command "ansible-playbook masternode.yml"
+10. For Setup Workernode in Cluster Run Command "ansible-playbook workernode.yml"
